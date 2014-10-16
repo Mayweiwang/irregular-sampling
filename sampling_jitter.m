@@ -6,7 +6,7 @@
        N=64;m=2;
        tao=0.39;fr=13.385;
        Fs = 1/tao;   
-       A1=1; A2=1;
+       A1=1; A2=1;A3=2; A4=1;
        vr=0.2;
        fc=2*vr*fr/300;
        fb=0.102*sqrt(fr);
@@ -15,8 +15,8 @@
 
 %% plot out C(?, ?)
        n=-Fs/2:Fs/(N-1):Fs/2;
-       for i=1:5
-           sigma=.25*2*(i-1)*tao;
+       for i=1:3
+           sigma=.25*2^(i-1)*tao;
            omega=n*2*pi;
            c=exp(-sigma^2/2*omega.^2);
            plot(0:1/(N/2-1):1, c(N/2+1:N),colors{i});hold on;
@@ -25,17 +25,21 @@
         title(' \fontsize{15} C(\omega, \sigma)');
         set(gcf,'Color',[1 1 1]);
         close all;
-   
+
+
+      
 %%       
-       y=zeros(4,N);sigmae=zeros(1,300);
-       for k=1:300
+       y=zeros(4,N);sigmae=zeros(1,100);
+       for k=1:100
            
                    ind=0:N-1;
                    t = ind*tao;
-                   delt=normrnd(0,sigma,1,length(t));
+                   deltN=normrnd(0,sigma,1,length(t));
                    x1=A1*exp(sqrt(-1)*(2*pi*t*f1))+A2*exp(sqrt(-1)*(2*pi*t*f2)); 
-                   x2 = A1*exp(sqrt(-1)*(2*pi*(t+delt)*f1))+A2*exp(sqrt(-1)*(2*pi*(t+delt)*f2));  
-        
+                   x2 = A1*exp(sqrt(-1)*(2*pi*(t+deltN)*f1))+A2*exp(sqrt(-1)*(2*pi*(t+deltN)*f2)); 
+                   x11=A3*exp(sqrt(-1)*(2*pi*t*f1))+A4*exp(sqrt(-1)*(2*pi*t*f2)); 
+                   x22 = A3*exp(sqrt(-1)*(2*pi*(t+deltN)*f1))+A4*exp(sqrt(-1)*(2*pi*(t+deltN)*f2));  
+                   
                    h = spectrum.periodogram('rectangular');
                    hopts1 = psdopts(h,x1);  % Default options based on the signal x
                    set(hopts1,'Fs',Fs,'SpectrumType','twosided','CenterDC',true,'NFFT',N);
@@ -53,28 +57,69 @@
                    t = ind*tao;
                    delt=normrnd(0,sigma,1,length(t));
                    x3 = A1*exp(sqrt(-1)*(2*pi*(t+delt)*f1))+A2*exp(sqrt(-1)*(2*pi*(t+delt)*f2));  
+                   x4 = A3*exp(sqrt(-1)*(2*pi*(t+delt)*f1))+A4*exp(sqrt(-1)*(2*pi*(t+delt)*f2));  
+                   
                    h = spectrum.welch('rectangular',N,0);
                    hopts3 = psdopts(h,x3);  % Default options based on the signal x
                    set(hopts3,'Fs',Fs,'SpectrumType','twosided','CenterDC',true,'NFFT',N);
                    subplot(222), psd(h,x3,hopts3);
                    h3=psd(h,x3,hopts3); Pxx3 = h3.Data;    y(3,:)=10*log10(Pxx3);% useful
                    W=h3.Frequencies;                          %     plot(10*log10(Pxx3))
-%                    sfs=167; sfi=93;  
+                   
+                   %                    sfs=167; sfi=93;  
                    sfs=42; sfi=23;                   
-%                    x2ave=mean(x2fft,1);                             % amplitude average
                    sigma2=log(Pxx3(sfs)/Pxx3(sfi))/(4*pi^2*(W(sfi)^2-W(sfs)^2));
                    if sigma2 <0
                                  sigma2=-sigma2;
                    end
                    sigmae(k)=sqrt(sigma2); 
+                   m=sigmae(k)/sigma;
+                   sigma3=log(Pxx3(sfs)/Pxx3(sfi))/(4^m*pi^2*(W(sfi)^2-W(sfs)^2));
+                   if sigma3 <0
+                                 sigma3=-sigma3;
+                   end
+                   sigmae(k)=sqrt(sigma3); 
                    omega=W*2*pi;
                    c=exp(-sigmae(k)^2/2*omega.^2);
+                   c2=exp(-sigmae(k)^2/2*omega.^2);
+                   
                    Pxx4=Pxx3./c.^2;
                    Pxx3(sfs)=Pxx4(sfs); Pxx3(sfi)=Pxx4(sfi); y(4,:)=10*log10(Pxx3);
                    subplot(224),hpsd=dspdata.psd(Pxx3,W,'Fs',Fs);plot(hpsd);
                    
+                   %% for A1~=A2
+                   h = spectrum.periodogram('rectangular');
+                   hopts11 = psdopts(h,x11);  % Default options based on the signal x
+                   set(hopts11,'Fs',Fs,'SpectrumType','twosided','CenterDC',true,'NFFT',N);
+                    figure(2), subplot(221), psd(h,x11,hopts11);
+                   h11=psd(h,x11,hopts11); Pxx5 = h11.Data; 
+                   y(5,:)=10*log10(Pxx5);
                    
+                   hopts22 = psdopts(h,x22);  % Default options based on the signal x
+                   set(hopts22,'Fs',Fs,'SpectrumType','twosided','CenterDC',true,'NFFT',N);
+                   subplot(223), psd(h,x22,hopts22)
+                   h22=psd(h,x22,hopts22); Pxx6 = h22.Data; y(6,:)=10*log10(Pxx6);
+                   set(gcf,'color',[1 1 1]);
                    
+                   h = spectrum.welch('rectangular',N,0);
+                   hopts4 = psdopts(h,x4);  % Default options based on the signal x
+                   set(hopts4,'Fs',Fs,'SpectrumType','twosided','CenterDC',true,'NFFT',N);
+                   subplot(222), psd(h,x4,hopts4);
+                   h4=psd(h,x4,hopts4); Pxx7 = h4.Data;    y(7,:)=10*log10(Pxx7);% useful
+
+
+c2(sfs)
+c2(sfi)
+o=c2(sfs);
+c2(sfs)=c2(sfi);
+c2(sfi)=o;
+
+
+c2(sfs)
+c2(sfi)
+                   Pxx8=Pxx7./c2.^2;
+                   Pxx7(sfs)=Pxx8(sfs); Pxx7(sfi)=Pxx8(sfi); y(8,:)=10*log10(Pxx7);
+                   subplot(224),hpsd=dspdata.psd(Pxx7,W,'Fs',Fs);plot(hpsd);
    
 
          
