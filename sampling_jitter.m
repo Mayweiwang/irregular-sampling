@@ -3,10 +3,10 @@
        colors={'-ro','-b+','-m^','-k*','-gx','-cd'};
 
 %        figure(5)
-       N=64;m=2;
+       N=256;m=2;
        tao=0.39;fr=13.385;
        Fs = 1/tao;   
-       A1=1; A2=1;A3=2; A4=1;
+       A1=1; A2=1;A3=1.5; A4=2;
        vr=0.2;
        fc=2*vr*fr/300;
        fb=0.102*sqrt(fr);
@@ -15,8 +15,8 @@
 
 %% plot out C(?, ?)
        n=-Fs/2:Fs/(N-1):Fs/2;
-       for i=1:3
-           sigma=.25*2^(i-1)*tao;
+       for i=1:2
+           sigma=1.5*tao; %.25*2^(i-1)*tao;
            omega=n*2*pi;
            c=exp(-sigma^2/2*omega.^2);
            plot(0:1/(N/2-1):1, c(N/2+1:N),colors{i});hold on;
@@ -44,9 +44,10 @@
                    hopts1 = psdopts(h,x1);  % Default options based on the signal x
                    set(hopts1,'Fs',Fs,'SpectrumType','twosided','CenterDC',true,'NFFT',N);
                    subplot(221), psd(h,x1,hopts1);
-                   h1=psd(h,x1,hopts1); Pxx1 = h1.Data; 
+                   h1=psd(h,x1,hopts1); Pxx1 = h1.Data;      plot(10*log10(Pxx1))
                    y(1,:)=10*log10(Pxx1);
-
+                   
+                   
                    hopts2 = psdopts(h,x2);  % Default options based on the signal x
                    set(hopts2,'Fs',Fs,'SpectrumType','twosided','CenterDC',true,'NFFT',N);
                    subplot(223), psd(h,x2,hopts2)
@@ -67,7 +68,7 @@
                    W=h3.Frequencies;                          %     plot(10*log10(Pxx3))
                    
                    %                    sfs=167; sfi=93;  
-                   sfs=42; sfi=23;                   
+                   sfs=167; sfi=93;  % 23 for 0.2 m/s                   
                    sigma2=log(Pxx3(sfs)/Pxx3(sfi))/(4*pi^2*(W(sfi)^2-W(sfs)^2));
                    if sigma2 <0
                                  sigma2=-sigma2;
@@ -107,16 +108,16 @@
                    subplot(222), psd(h,x4,hopts4);
                    h4=psd(h,x4,hopts4); Pxx7 = h4.Data;    y(7,:)=10*log10(Pxx7);% useful
 
-
-c2(sfs)
-c2(sfi)
-o=c2(sfs);
-c2(sfs)=c2(sfi);
-c2(sfi)=o;
-
-
-c2(sfs)
-c2(sfi)
+% 
+% c2(sfs)
+% c2(sfi)
+% o=c2(sfs);
+% c2(sfs)=c2(sfi);
+% c2(sfi)=o;
+% 
+% 
+% c2(sfs)
+% c2(sfi)
                    Pxx8=Pxx7./c2.^2;
                    Pxx7(sfs)=Pxx8(sfs); Pxx7(sfi)=Pxx8(sfi); y(8,:)=10*log10(Pxx7);
                    subplot(224),hpsd=dspdata.psd(Pxx7,W,'Fs',Fs);plot(hpsd);
